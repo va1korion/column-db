@@ -12,17 +12,17 @@ var ErrNotImplemented = fmt.Errorf("not implemented error")
 func (l LsmTree) MakeTable() (LsmTree, error) {
 	wal, _ := os.OpenFile("/mnt/d/projects/github.com/va1korion/column-db/data/wal/wal", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	return LsmTree{
-		mutex: &sync.Mutex{},
-		dbDir: "/mnt/d/projects/github.com/va1korion/column-db/data/lsm", 
-		wal: wal,
-		maxDiskTableIndex: 4096, 
-		diskTableNum: 8, 
-		memTable: &memTable{
+		Mutex: &sync.Mutex{},
+		DbDir: "/mnt/d/projects/github.com/va1korion/column-db/data/lsm", 
+		Wal: wal,
+		MaxDiskTableIndex: 4096, 
+		DiskTableNum: 8, 
+		MemTable: &memTable{
 			data: Tree{},
 			b: 0,
 		}, 
-		memTableThreshold: 4096, 
-		diskTableNumThreshold: 65536, 
+		MemTableThreshold: 4096, 
+		DiskTableNumThreshold: 65536, 
 	}, ErrNotImplemented
 }
 
