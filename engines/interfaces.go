@@ -2,46 +2,58 @@ package engines
 
 import (
     "bytes";
-     "sync";
-    "os"
+    "sync";
+    "os";
+    "go/types"
 )
 type Column struct{
-    Type string;
+    Type types.Type; // too deep?
     PrimaryIndex bool;
-    DataSize int;
+    DataSize int; // in bytes
     Data bytes.Buffer;
 }
 
 type Table struct {
+    TableName string;
     Columns map[string]Column;
-    PrimaryIndex []int;
 }
 
 type Row struct {
-    Columns map[string]bytes.Buffer; // basically a JSON
+    Columns map[string]bytes.Buffer; // types? schema?
+    Types map[string]types.Type
 }
 
 type WriteAheadLog interface {
     MakeTable() (Table, error) // a lot of mmaps? need to realloc?
-    WriteTransaction() error // not really a transaction, I just can't think of a better name
+    WriteTransaction([]Row) error // not really a transaction, I just can't think of a better name
+    ReadLast(nrows int) ([]Row, error)
     Load() (Table, error) // load wal from disk
 }
     
+
+type Database interface {
+    MakeTable(columns map[string]types.Type, // header: type
+        tableName, dbDir, walPath string) (Engine, error)
+    DeleteTable(tableName, dbDir string) error
+    GetTable(tableName string) (Engine, error)
+}
+
+
 type Engine interface {
-    MakeTable(headers []string, dbDir, walPath string) (Engine, error)
     // kinda want to say data is supposed to be consecutive, but that's limiting
-    Create(data []Row) error 
-    // note that updates are expected in batches, 
-    // I'm gonna die implementing it later
-    // keys and values here are supposed to correspond to this SQL 
-    // SELECT * FROM table WHERE columns[0] = keys[0]
-    Read(columns []string, keys []bytes.Buffer) (Row, error) // read data from table in memory
-    Update(columns []string, keys []bytes.Buffer, values []Row) error
-    Delete(columns []string, keys []bytes.Buffer) error 
+    Create(data []Row) error // aka insert
+    // note that updates are expected in batches 
+    // read data from table in memory. Should think of better query criteria than "key equals stuff"
+    Read(key_column string, keys []bytes.Buffer) ([]Row, error) 
+    Update(key_column string, keys []bytes.Buffer, values []Row) error
+    Delete(key_column string, keys []bytes.Buffer) error 
     
-    Flush() (int, error) // save table as a file on disk
-    Load() (Table, error) // load table from disk
-    DeleteTable() error
+    // assuming the column is numerical
+    ReadRange(Column string, lower_bound float64, upper_bound float64) ([]Row, error)
+    // todo figure out usage
+    // todo aggregation
+    Flush() (int, error) 
+    Load() (Table, error) 
 }
 
 type Tree struct {
