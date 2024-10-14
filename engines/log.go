@@ -1,33 +1,33 @@
 package engines
 
-type LogEngine struct {
-	
-}
+import (
+	"bytes";
+)
 
 
-func (l LogEngine) MakeTable() (Table, error) {
+func (l Log) MakeTable() (Table, error) {
 	return Table{}, ErrNotImplemented
 }
 
-func (l LogEngine) Insert() error {
+func (l Log) Insert() error {
 	return ErrNotImplemented
 }
 
-func (l LogEngine) Delete() error {
+func (l Log) Delete() error {
 	return ErrNotImplemented
 }
 
-func (l LogEngine) Update() error {
+func (l Log) Update() error {
 	return ErrNotImplemented
 
 }
 
-func (l LogEngine) Read() (*bytes.Buffer, error) {
+func (l Log) Read() (*bytes.Buffer, error) {
 	return nil, ErrNotImplemented
 
 }
 
-func (l LogEngine) Save() (int, error) {
+func (l Log) Save() (int, error) {
 	return 0, ErrNotImplemented
 }
 
