@@ -30,16 +30,14 @@ type WriteAheadLog interface {
 type Engine interface {
     MakeTable(headers []string, dbDir, walPath string) (Engine, error)
     // kinda want to say data is supposed to be consecutive, but that's limiting
-    Insert(data []Row) error 
+    Create(data []Row) error 
     // note that updates are expected in batches, 
     // I'm gonna die implementing it later
     // keys and values here are supposed to correspond to this SQL 
-    // SELECT * FROM table WHERE columns[0] = values[0]
-    Read(columns []int, values []bytes.Buffer) (Row, error) // read data from table in memory
-    Update(columns []int, values []bytes.Buffer, data []Row) error
-    Delete(columns []string, values []bytes.Buffer) error 
-    
-
+    // SELECT * FROM table WHERE columns[0] = keys[0]
+    Read(columns []string, keys []bytes.Buffer) (Row, error) // read data from table in memory
+    Update(columns []string, keys []bytes.Buffer, values []Row) error
+    Delete(columns []string, keys []bytes.Buffer) error 
     
     Flush() (int, error) // save table as a file on disk
     Load() (Table, error) // load table from disk
