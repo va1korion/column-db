@@ -52,6 +52,9 @@ type Engine interface {
     ReadRange(Column string, lower_bound float64, upper_bound float64) ([]Row, error)
     // todo figure out usage
     // todo aggregation
+    GetAvg(Column string) (float64, error)
+    GetMode(Column string) (float64, error)
+
     Flush() (int, error) 
     Load() (Table, error) 
 }
