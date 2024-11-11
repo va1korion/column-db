@@ -8,6 +8,7 @@ import (
 )
 
 type Column struct{
+    Mutex *sync.Mutex;
     Type types.Type; // too deep?
     PrimaryIndex bool;
     DataSize int; // in bytes
@@ -21,6 +22,7 @@ type Table struct {
 
 type Row struct {
     Columns map[string]interface{}; // types? schema? yes.
+    Schema map[string]types.Type;
 }
 
 type WriteAheadLog interface {
@@ -69,17 +71,16 @@ type memTable struct {
 
 type LsmTree struct {
     mutex *sync.Mutex
+    memTable *memTable // current mem table
     dbDir string  // directory to store data
     wal *os.File // write ahead log file
     maxDiskTableIndex int // latest disk table
     diskTableNum int // total disk tables
-    memTable *memTable // current mem table
     memTableThreshold int // flush after this threshold
     diskTableNumThreshold int // merge after this threshold
 }
 
 type Log struct {
-    Mutex *sync.Mutex;
     Table Table
     DbDir string
     Wal *os.File // do I need wal for log-like stuff?

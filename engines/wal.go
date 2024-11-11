@@ -62,14 +62,18 @@ func loadMemTable(wal *os.File) (*memTable, error) {
 		if err == io.EOF {
 			return memTable, nil
 		}
-
-		if value != nil {
-			memTable.put(row)
+		
+		
+		if (row.Columns != nil) {
+			
+			// memTable.put(row)
 		} else {
-			memTable.delete(row)
+			// memTable.delete(row)
 		}
+		
 	}
 }
+
 
 
 func ToGOB64(m Row) string {

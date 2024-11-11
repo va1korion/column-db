@@ -6,7 +6,7 @@ import (
 
 
 func (l Log) MakeTable() (Table, error) {
-	return Table{}, ErrNotImplemented
+	return Table{}, nil
 }
 
 func (l Log) Insert() error {
