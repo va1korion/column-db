@@ -10,6 +10,9 @@ import (
 	"encoding/gob"
 )
 
+
+var ErrNotImplemented = fmt.Errorf("Not implemented error")
+
 // clearWAL closes the current file and open the new file in the truncate mode.
 func clearWAL(dbDir string, wal *os.File) (*os.File, error) {
 	walPath := path.Join(dbDir, walFileName)
@@ -47,13 +50,13 @@ func appendToWAL(wal *os.File, row Row) error {
 }
 
 // loadMemTable loads MemTable from the WAL file.
-func loadMemTable(wal *os.File) (*memTable, error) {
+func loadMemTable(wal *os.File) (*Table, error) {
 	// for safety, since the file is open in read-write mode
 	if _, err := wal.Seek(0, io.SeekStart); err != nil {
 		return nil, fmt.Errorf("failed to seek to the beginning: %w", err)
 	}
 
-	memTable := newMemTable()
+	memTable := MakeTable()
 	for {
 		row, err := decode(wal)
 		if err != nil && err != io.EOF {

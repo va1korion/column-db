@@ -1,15 +1,44 @@
 package engines
 
 import (
-    "sync";
-    "os";
-    "go/types";
-    rbytree "github.com/emirpasic/gods/trees/redblacktree"
+	"bytes"
+	"os"
+	"sync"
 )
+
+const walFileName = "wal.gob"
+
+
+
+type IColumn interface {
+	Grow(idx uint32)
+	Apply([]byte)
+	Value(idx uint32) (interface{}, bool)
+	Contains(idx uint32) bool
+	Index([]byte) error
+	Snapshot(chunk []byte, dst *bytes.Buffer)
+}
+
+// Numeric represents a column that stores numbers.
+type Numeric interface {
+	IColumn
+	LoadFloat64(uint32) (float64, bool)
+	LoadInt64(uint32) (int64, bool)
+	FilterFloat64([]byte,  func(v float64) bool)
+	FilterInt64([]byte,  func(v int64) bool)
+}
+
+// Textual represents a column that stores strings.
+type Textual interface {
+	IColumn
+	LoadString(uint32) (string, bool)
+	FilterString([]byte, func(v string) bool)
+}
+
 
 type Column struct{
     Mutex *sync.Mutex;
-    Type types.Type; // too deep?
+    Type columnType; // too deep?
     PrimaryIndex bool;
     DataSize int; // in bytes
     Data []interface{};
@@ -22,8 +51,10 @@ type Table struct {
 
 type Row struct {
     Columns map[string]interface{}; // types? schema? yes.
-    Schema map[string]types.Type;
+    Schema map[string]columnType;
 }
+
+
 
 type WriteAheadLog interface {
     MakeTable() (Table, error) // a lot of mmaps? need to realloc?
@@ -34,12 +65,10 @@ type WriteAheadLog interface {
     
 
 type Database interface {
-    MakeTable(columns map[string]types.Type, // header: type
-        tableName, dbDir, walPath string) (Engine, error)
+    MakeTable(columns map[string]columnType, tableName, dbDir, walPath string) (Table, error)
     DeleteTable(tableName, dbDir string) error
-    GetTable(tableName string) (Engine, error)
+    GetTable(tableName string) (Table, error)
 }
-
 
 type Engine interface {
     // kinda want to say data is supposed to be consecutive, but that's limiting
@@ -58,17 +87,16 @@ type Engine interface {
     // todo aggregation
     GetAvg(Column string) (float64, error)
     GetMode(Column string) (float64, error)
+    Count(Column string, Value []byte) (int, error)
 
     // disk operations
     Flush() (int, error) 
     Load() (Table, error) 
 }
 
-type memTable struct {
-    data rbytree.Tree // can't be bothered to do red-black trees right now. Can I just use GoDS?
-    b int
-}
 
+// later
+/*
 type LsmTree struct {
     mutex *sync.Mutex
     memTable *memTable // current mem table
@@ -79,6 +107,7 @@ type LsmTree struct {
     memTableThreshold int // flush after this threshold
     diskTableNumThreshold int // merge after this threshold
 }
+*/
 
 type Log struct {
     Table Table
