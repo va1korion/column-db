@@ -45,13 +45,15 @@ type Column struct{
 }
 
 type Table struct {
+    mutex *sync.Mutex;
     TableName string;
-    Columns map[string]Column;
+    Columns map[string]*Column;
+    Schema map[string]columnType;
 }
 
 type Row struct {
-    Columns map[string]interface{}; // types? schema? yes.
     Schema map[string]columnType;
+    Columns map[string]*interface{}; // types? schema? yes.
 }
 
 
@@ -76,12 +78,12 @@ type Engine interface {
     
     // note that updates are expected in batches 
     // read data from table in memory. Should think of better query criteria than "key equals stuff"
-    Read(key_column string, keys []byte) ([]Row, error) 
-    Update(key_column string, keys []byte, values []Row) error
-    Delete(key_column string, keys []byte) error 
+    Read(key_column string, key interface{}) ([]Row, error) 
+    Update(key_column string, key interface{}, value Row) error
+    Delete(key_column string, key interface{}) error 
     
     // assuming the column is numerical
-    ReadRange(Column string, lower_bound float64, upper_bound float64) ([]Row, error)
+    ReadRange(Column string, lower_bound int, upper_bound int) ([]Row, error)
     
     // todo figure out usage
     // todo aggregation
@@ -89,9 +91,11 @@ type Engine interface {
     GetMode(Column string) (float64, error)
     Count(Column string, Value []byte) (int, error)
 
-    // disk operations
+    // disk operations, todo later
+    /*
     Flush() (int, error) 
     Load() (Table, error) 
+    */
 }
 
 
