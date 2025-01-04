@@ -1,17 +1,17 @@
 package engines
 
 import (
-	"encoding/base64"
-	"fmt"
 	"bytes"
+	"encoding/base64"
+	"encoding/gob"
+	"fmt"
 	"io"
 	"os"
 	"path"
-	"encoding/gob"
 )
 
-
-var ErrNotImplemented = fmt.Errorf("Not implemented error")
+var ErrNotImplemented = fmt.Errorf("not implemented error")
+var DB = InMemory{Tables: make(map[string]Table)}
 
 // clearWAL closes the current file and open the new file in the truncate mode.
 func clearWAL(dbDir string, wal *os.File) (*os.File, error) {
@@ -28,7 +28,6 @@ func clearWAL(dbDir string, wal *os.File) (*os.File, error) {
 
 	return wal, nil
 }
-
 
 // appendToWAL appends entry to the WAL file.
 func appendToWAL(wal *os.File, row Row) error {
@@ -56,48 +55,56 @@ func loadMemTable(wal *os.File) (*Table, error) {
 		return nil, fmt.Errorf("failed to seek to the beginning: %w", err)
 	}
 
-	memTable := MakeTable()
+	memTable, _ := DB.MakeTable(
+		map[string]ColumnType{},
+		"memTable",
+		"",
+		"",
+	)
 	for {
 		row, err := decode(wal)
 		if err != nil && err != io.EOF {
 			return nil, fmt.Errorf("failed to read: %w", err)
 		}
 		if err == io.EOF {
-			return memTable, nil
+			return &memTable, nil
 		}
-		
-		
-		if (row.Columns != nil) {
-			
+
+		if row.Columns != nil {
+
 			// memTable.put(row)
 		} else {
 			// memTable.delete(row)
 		}
-		
+
 	}
 }
 
-
-
 func ToGOB64(m Row) string {
-    b := bytes.Buffer{}
-    e := gob.NewEncoder(&b)
-    err := e.Encode(m)
-    if err != nil { fmt.Println(`failed gob Encode`, err) }
-    return base64.StdEncoding.EncodeToString(b.Bytes())
+	b := bytes.Buffer{}
+	e := gob.NewEncoder(&b)
+	err := e.Encode(m)
+	if err != nil {
+		fmt.Println(`failed gob Encode`, err)
+	}
+	return base64.StdEncoding.EncodeToString(b.Bytes())
 }
 
 // go binary decoder
 func FromGOB64(str string) Row {
-    m := Row{}
-    by, err := base64.StdEncoding.DecodeString(str)
-    if err != nil { fmt.Println(`failed base64 Decode`, err); }
-    b := bytes.Buffer{}
-    b.Write(by)
-    d := gob.NewDecoder(&b)
-    err = d.Decode(&m)
-    if err != nil { fmt.Println(`failed gob Decode`, err); }
-    return m
+	m := Row{}
+	by, err := base64.StdEncoding.DecodeString(str)
+	if err != nil {
+		fmt.Println(`failed base64 Decode`, err)
+	}
+	b := bytes.Buffer{}
+	b.Write(by)
+	d := gob.NewDecoder(&b)
+	err = d.Decode(&m)
+	if err != nil {
+		fmt.Println(`failed gob Decode`, err)
+	}
+	return m
 }
 
 func encode(row Row, wal *os.File) error {
@@ -108,7 +115,6 @@ func encode(row Row, wal *os.File) error {
 	}
 	return nil
 }
-
 
 func decode(wal *os.File) (Row, error) {
 	gob_row := make([]byte, 0)
